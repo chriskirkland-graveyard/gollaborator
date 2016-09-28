@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	spotify "../spotify"
 )
 
 type Paginator struct {
@@ -47,11 +48,12 @@ func (swg SafeWaitGroup) Wait() {
 	swg.WaitGroup.Wait()
 }
 
-func WaitAndClose(wg sync.WaitGroup, grossChannel chan []interface{}, channels ...chan interface{}) {
+func WaitAndClose(wg sync.WaitGroup, grossChannel chan []spotify.Artist, channels ...chan string) {
 	wg.Wait()
 	for _, c := range channels {
 		close(c)
 	}
+	close(grossChannel)
 }
 
 func formatRequest(r *http.Request) string {

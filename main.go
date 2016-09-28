@@ -47,8 +47,15 @@ func main() {
 	// 		Printer:         printQueue,
 	// 	}}.Do()
 
-	var thing interface{}
-	thing = spotify.Artist{}
+	//var thing interface{}
+	//thing = spotify.Artist{}
+
+
+
+	//resultscopy := make([]interface{}, len(results))
+  //for i, v := range results {
+	//		resultscopy[i] = v
+	//}
 
 	// close channels
 	utils.WaitAndClose(worker.NumActiveProcessors.WaitGroup, results, printQueue)
