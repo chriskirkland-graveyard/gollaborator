@@ -37,20 +37,27 @@ type AlbumProcessor struct {
 }
 
 func (ap ArtistProcessor) Do() {
-	fmt.Printf("Entering ArtistProcessor.Do w/ %v @ %v degrees\n", ap.CurrentArtistId, len(ap.Path))
+	fmt.Printf("Entering ArtistProcessor.Do w/ %v @ %v degrees (%v)\n", ap.CurrentArtistId, len(ap.Path), ap.Path)
 
 	currentPathLength := len(ap.Path)
 
 	visitedArtists.Lock()
+	fmt.Printf("Visiting artist LOCK %v\n", ap.CurrentArtistId)
 
 	// check if we've been here
 	shortestPath, ok := visitedArtists.Map[ap.CurrentArtistId]
-	if !ok || currentPathLength < shortestPath {
-		visitedArtists.Map[ap.CurrentArtistId] = len(ap.Path)
+	if !ok {
+		fmt.Printf("Visiting artist for the first time: %v\n", ap.CurrentArtistId)
+		visitedArtists.Map[ap.CurrentArtistId] = currentPathLength
+	} else if currentPathLength < shortestPath {
+		fmt.Printf("Found shorter path for artist: %v\n", ap.CurrentArtistId)
+		visitedArtists.Map[ap.CurrentArtistId] = currentPathLength
 	} else {
+		fmt.Printf("On a longer path for artist \"%v\". Exiting...\n", ap.CurrentArtistId)
 		return
 	}
 
+	fmt.Printf("Visiting artist UNLOCK %v\n", ap.CurrentArtistId)
 	visitedArtists.Unlock()
 
 	// get artist catalog
@@ -70,11 +77,11 @@ func (ap ArtistProcessor) Do() {
 		go albumProcessor.Do()
 	}
 
-	fmt.Printf("Exiting ArtistProcessor.Do w/ %v @ %v degrees\n", ap.CurrentArtistId, len(ap.Path))
+	fmt.Printf("Exiting ArtistProcessor.Do w/ %v @ %v degrees (%v)\n", ap.CurrentArtistId, len(ap.Path), ap.Path)
 }
 
 func (ap AlbumProcessor) Do() {
-	fmt.Printf("Entering AlbumProcessor.Do w/ %v @ %v degrees\n", ap.AlbumId, len(ap.Path))
+	fmt.Printf("Entering AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path)
 
 	// lookup album by id
 	album := spotify.GetAlbumById(ap.AlbumId)
@@ -86,22 +93,26 @@ func (ap AlbumProcessor) Do() {
 				continue
 			}
 
-			// update Processor
-			ap.Path = append(ap.Path, artist)
-			ap.CurrentArtistId = artist.Id
-
+			newPath := append(ap.Path, artist)
 			if artist.Id == ap.TargetArtistId {
-				ap.Results <- ap.Path
+				ap.Results <- newPath
 				return
 			} else if !ap.pathTooLong() {
 				artistProcessor := ArtistProcessor{
-					Processor: ap.Processor,
+					Processor: Processor{
+						StartArtistId:   ap.StartArtistId,
+						CurrentArtistId: artist.Id,
+						TargetArtistId:  ap.TargetArtistId,
+						Path:            newPath,
+						MaxPathLength:   ap.MaxPathLength,
+						Results:         ap.Results,
+					},
 				}
 				go artistProcessor.Do()
 			}
 		}
 	}
-	fmt.Printf("Exiting AlbumProcessor.Do w/ %v @ %v degrees\n", ap.AlbumId, len(ap.Path))
+	fmt.Printf("Exiting AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path)
 }
 
 func ProcessResults(maxPathLength int, results <-chan []spotify.Artist) ([]spotify.Artist, error) {

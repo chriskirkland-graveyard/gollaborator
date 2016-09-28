@@ -33,13 +33,23 @@ func GetAlbumById(id string) Album {
 	client := &http.Client{}
 
 	url := fmt.Sprintf("https://api.spotify.com/v1/albums/%v", id)
-	req, _ := http.NewRequest("GET", url, nil)
-	resp, _ := client.Do(req)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		panic(fmt.Errorf("GetAlbumById error creating request: %v", err))
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(fmt.Errorf("GetAlbumById request error: %v", err))
+	}
 
 	// try to UnMarshall
 	var album Album
 	fullBody, _ := ioutil.ReadAll(resp.Body)
-	_ = json.Unmarshal(fullBody, &album)
+	err = json.Unmarshal(fullBody, &album)
+	if err != nil {
+		panic(fmt.Errorf("GetAlbumById error unmarshalling album: %v", err))
+	}
 
 	return album
 }
