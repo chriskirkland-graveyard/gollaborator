@@ -3,18 +3,14 @@ package worker
 import (
 	"fmt"
 	"runtime"
-	"sync"
 	"time"
 
 	spotify "../spotify"
+	utils "../utils"
 )
 
-type safeMap struct {
-	Map map[string]int
-	sync.Mutex
-}
-
-var visitedArtists = safeMap{Map: make(map[string]int)}
+var visitedArtists = utils.SafeMap{Map: make(map[string]int)}
+var NumActiveProcessors = utils.SafeWaitGroup{}
 
 type Processor struct {
 	StartArtistId   string
@@ -44,6 +40,9 @@ type AlbumProcessor struct {
 }
 
 func (ap ArtistProcessor) Do() {
+	NumActiveProcessors.Add(1)
+	defer NumActiveProcessors.Done()
+
 	// fmt.Printf("Entering ArtistProcessor.Do w/ %v @ %v degrees (%v)\n", ap.CurrentArtistId, len(ap.Path), ap.Path)
 	// defer fmt.Printf("Exiting ArtistProcessor.Do w/ %v @ %v degrees (%v)\n", ap.CurrentArtistId, len(ap.Path), ap.Path)
 
@@ -96,6 +95,9 @@ func (ap ArtistProcessor) Do() {
 }
 
 func (ap AlbumProcessor) Do() {
+	NumActiveProcessors.Add(1)
+	defer NumActiveProcessors.Done()
+
 	// fmt.Printf("Entering AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path)
 	// defer fmt.Printf("Exiting AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path)
 	ap.Print(fmt.Sprintf("Entering AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path))

@@ -36,16 +36,22 @@ func main() {
 	go utils.Printer(printQueue)
 
 	// do stuff
-	go worker.ArtistProcessor{
-		worker.Processor{
-			StartArtistId:   startArtist.Id,
-			CurrentArtistId: startArtist.Id,
-			TargetArtistId:  targetArtist.Id,
-			Path:            []spotify.Artist{startArtist},
-			MaxPathLength:   maxPathLength,
-			Results:         results,
-			Printer:         printQueue,
-		}}.Do()
+	// go worker.ArtistProcessor{
+	// 	worker.Processor{
+	// 		StartArtistId:   startArtist.Id,
+	// 		CurrentArtistId: startArtist.Id,
+	// 		TargetArtistId:  targetArtist.Id,
+	// 		Path:            []spotify.Artist{startArtist},
+	// 		MaxPathLength:   maxPathLength,
+	// 		Results:         results,
+	// 		Printer:         printQueue,
+	// 	}}.Do()
+
+	var thing interface{}
+	thing = spotify.Artist{}
+
+	// close channels
+	utils.WaitAndClose(worker.NumActiveProcessors.WaitGroup, results, printQueue)
 
 	// start processing results
 	path, err := worker.ProcessResults(maxPathLength, results, printQueue)

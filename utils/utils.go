@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type Paginator struct {
@@ -19,6 +20,38 @@ func Printer(queue <-chan string) {
 		fmt.Print(msg)
 	}
 	fmt.Println("PRINTER DONE")
+}
+
+type SafeMap struct {
+	Map map[string]int
+	sync.Mutex
+}
+type SafeWaitGroup struct {
+	WaitGroup sync.WaitGroup
+	sync.Mutex
+}
+
+func (swg SafeWaitGroup) Add(n int) {
+	swg.Lock()
+	swg.WaitGroup.Add(n)
+	swg.Unlock()
+}
+
+func (swg SafeWaitGroup) Done() {
+	swg.Lock()
+	swg.WaitGroup.Done()
+	swg.Unlock()
+}
+
+func (swg SafeWaitGroup) Wait() {
+	swg.WaitGroup.Wait()
+}
+
+func WaitAndClose(wg sync.WaitGroup, grossChannel chan []interface{}, channels ...chan interface{}) {
+	wg.Wait()
+	for _, c := range channels {
+		close(c)
+	}
 }
 
 func formatRequest(r *http.Request) string {
