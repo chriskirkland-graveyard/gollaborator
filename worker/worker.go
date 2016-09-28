@@ -54,6 +54,7 @@ func (ap ArtistProcessor) Do() {
 		visitedArtists.Map[ap.CurrentArtistId] = currentPathLength
 	} else {
 		fmt.Printf("On a longer path for artist \"%v\". Exiting...\n", ap.CurrentArtistId)
+    visitedArtists.Unlock()
 		return
 	}
 
@@ -96,7 +97,7 @@ func (ap AlbumProcessor) Do() {
 			newPath := append(ap.Path, artist)
 			if artist.Id == ap.TargetArtistId {
 				ap.Results <- newPath
-				return
+			  
 			} else if !ap.pathTooLong() {
 				artistProcessor := ArtistProcessor{
 					Processor: Processor{
@@ -120,6 +121,7 @@ func ProcessResults(maxPathLength int, results <-chan []spotify.Artist) ([]spoti
 
 	for path := range results {
 		if len(path) < len(bestPath) {
+			fmt.Printf("Found a better path!!! w/ %v, old path is: %v\n", path, bestPath)
 			bestPath = path
 		}
 	}
