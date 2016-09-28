@@ -14,6 +14,13 @@ type Paginator struct {
 	Total    int    `json:"total"`
 }
 
+func Printer(queue <-chan string) {
+	for msg := range queue {
+		fmt.Print(msg)
+	}
+	fmt.Println("PRINTER DONE")
+}
+
 func formatRequest(r *http.Request) string {
 	// Create return string
 	var request []string

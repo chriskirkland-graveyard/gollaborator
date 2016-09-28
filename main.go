@@ -2,8 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
+
+	http "net/http"
+	_ "net/http/pprof"
 
 	spotify "./spotify"
+	utils "./utils"
 	worker "./worker"
 )
 
@@ -20,6 +25,15 @@ func main() {
 	fmt.Println()
 
 	results := make(chan []spotify.Artist, 10)
+	printQueue := make(chan string, 100000)
+
+	// pprof
+	go func() {
+		log.Println(http.ListenAndServe("localhost:1234", nil))
+	}()
+
+	// start printer
+	go utils.Printer(printQueue)
 
 	// do stuff
 	go worker.ArtistProcessor{
@@ -30,10 +44,11 @@ func main() {
 			Path:            []spotify.Artist{startArtist},
 			MaxPathLength:   maxPathLength,
 			Results:         results,
+			Printer:         printQueue,
 		}}.Do()
 
 	// start processing results
-	path, err := worker.ProcessResults(maxPathLength, results)
+	path, err := worker.ProcessResults(maxPathLength, results, printQueue)
 	if err != nil {
 		fmt.Println("YOU FAILED!!!!")
 	} else {
