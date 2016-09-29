@@ -89,7 +89,7 @@ func GetArtistById(id string) Artist {
 func GetArtistCatalog(id string) Catalog {
 	client := &http.Client{}
 
-	url := fmt.Sprintf("https://api.spotify.com/v1/artists/%v/albums?market=US", id)
+	url := fmt.Sprintf("https://api.spotify.com/v1/artists/%v/albums?market=US&limit=50", id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		panic(fmt.Errorf("GetArtistCatalog error creating request: %v", err))

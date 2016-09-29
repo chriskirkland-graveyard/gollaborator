@@ -139,10 +139,16 @@ func ProcessResults(maxPathLength int, results <-chan []spotify.Artist, printQue
 	bestPath := make([]spotify.Artist, maxPathLength+1)
 	ticker := time.NewTicker(time.Millisecond * 500)
 
+	breakOut := false
+
 	for {
 		select {
-		case path := <-results:
-			if len(path) < len(bestPath) {
+		case path, ok := <-results:
+			if !ok {
+				// results channel closed
+				fmt.Println("Results channel was closed!!!")
+				breakOut = true
+			} else if len(path) < len(bestPath) {
 				fmt.Printf("Found a better path!!! w/ %v, old path is: %v\n", path, bestPath)
 				bestPath = path
 			}
@@ -151,14 +157,12 @@ func ProcessResults(maxPathLength int, results <-chan []spotify.Artist, printQue
 			fmt.Printf("LENGTH OF PRINTQUEUE: %v\n", len(printQueue))
 			fmt.Println()
 		}
-	}
 
-	//for path := range results {
-	//	if len(path) < len(bestPath) {
-	//		fmt.Printf("Found a better path!!! w/ %v, old path is: %v\n", path, bestPath)
-	//		bestPath = path
-	//	}
-	//}
+		if breakOut {
+			break
+		}
+
+	}
 
 	if len(bestPath) < maxPathLength+1 {
 		return bestPath, nil

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+
 	spotify "../spotify"
 )
 
@@ -32,19 +33,19 @@ type SafeWaitGroup struct {
 	sync.Mutex
 }
 
-func (swg SafeWaitGroup) Add(n int) {
+func (swg *SafeWaitGroup) Add(n int) {
 	swg.Lock()
 	swg.WaitGroup.Add(n)
 	swg.Unlock()
 }
 
-func (swg SafeWaitGroup) Done() {
+func (swg *SafeWaitGroup) Done() {
 	swg.Lock()
 	swg.WaitGroup.Done()
 	swg.Unlock()
 }
 
-func (swg SafeWaitGroup) Wait() {
+func (swg *SafeWaitGroup) Wait() {
 	swg.WaitGroup.Wait()
 }
 

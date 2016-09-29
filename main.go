@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 
 	http "net/http"
 	_ "net/http/pprof"
@@ -17,9 +18,13 @@ func main() {
 	targetArtistName := "Snoop Dogg"
 	maxPathLength := 6
 
+	// var startArtistName = flag.String("starting artist", "Banks & Steelz", "starting artist")
+	// var targetArtistName = flag.String("target artist", "Snoop Dogg", "target artist")
+
 	// assume the first result is good... heh.
 	startArtist := spotify.GetArtistsByName(startArtistName)[0]
 	targetArtist := spotify.GetArtistsByName(targetArtistName)[0]
+	// targetArtist := spotify.Artist{Id: "6NYHiotMjdo6XqeVcCphtf", Name: "Space"}
 	fmt.Printf("%+v\n", startArtist)
 	fmt.Printf("%+v\n", targetArtist)
 	fmt.Println()
@@ -36,29 +41,21 @@ func main() {
 	go utils.Printer(printQueue)
 
 	// do stuff
-	// go worker.ArtistProcessor{
-	// 	worker.Processor{
-	// 		StartArtistId:   startArtist.Id,
-	// 		CurrentArtistId: startArtist.Id,
-	// 		TargetArtistId:  targetArtist.Id,
-	// 		Path:            []spotify.Artist{startArtist},
-	// 		MaxPathLength:   maxPathLength,
-	// 		Results:         results,
-	// 		Printer:         printQueue,
-	// 	}}.Do()
+	go worker.ArtistProcessor{
+		worker.Processor{
+			StartArtistId:   startArtist.Id,
+			CurrentArtistId: startArtist.Id,
+			TargetArtistId:  targetArtist.Id,
+			Path:            []spotify.Artist{startArtist},
+			MaxPathLength:   maxPathLength,
+			Results:         results,
+			Printer:         printQueue,
+		}}.Do()
 
-	//var thing interface{}
-	//thing = spotify.Artist{}
-
-
-
-	//resultscopy := make([]interface{}, len(results))
-  //for i, v := range results {
-	//		resultscopy[i] = v
-	//}
+	<-time.After(1000 * time.Millisecond)
 
 	// close channels
-	utils.WaitAndClose(worker.NumActiveProcessors.WaitGroup, results, printQueue)
+	go utils.WaitAndClose(worker.NumActiveProcessors.WaitGroup, results, printQueue)
 
 	// start processing results
 	path, err := worker.ProcessResults(maxPathLength, results, printQueue)
