@@ -202,7 +202,7 @@ func ProcessResults(maxPathLength int, results <-chan []spotify.Artist, printQue
 				count++
 			}
 		}
-		fmt.Printf("Collaborators @ distance %v: %v\n", i, count)
+		fmt.Printf("Collaborators @ distance %v: %v\n", i-1, count)
 	}
 	fmt.Println()
 

@@ -14,9 +14,13 @@ import (
 )
 
 func main() {
-	startArtistName := "Banks & Steelz"
-	targetArtistName := "Snoop Dogg"
-	maxPathLength := 2
+	// startArtistName := "Banks & Steelz"
+	// startArtistName := "flying lotus"
+	// startArtistName := "Shaun Ryder"
+	startArtistName := "Neneh cherry"
+	// targetArtistName := "Snoop Dogg"
+	targetArtistName := "Warpaint"
+	maxPathLength := 1
 
 	// var startArtistName = flag.String("starting artist", "Banks & Steelz", "starting artist")
 	// var targetArtistName = flag.String("target artist", "Snoop Dogg", "target artist")
@@ -57,7 +61,7 @@ func main() {
 			CurrentArtistId: startArtist.Id,
 			TargetArtistId:  targetArtist.Id,
 			Path:            []spotify.Artist{startArtist},
-			MaxPathLength:   maxPathLength,
+			MaxPathLength:   maxPathLength + 1,
 			Results:         results,
 			Printer:         printQueue,
 		}}.Do()
@@ -68,7 +72,7 @@ func main() {
 	go utils.WaitAndClose(&worker.NumActiveProcessors.WaitGroup, results, printQueue)
 
 	// start processing results
-	path, err := worker.ProcessResults(maxPathLength, results, printQueue)
+	path, err := worker.ProcessResults(maxPathLength+1, results, printQueue)
 	if err != nil {
 		fmt.Println("YOU FAILED!!!!")
 	} else {
