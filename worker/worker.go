@@ -10,6 +10,7 @@ import (
 )
 
 var visitedArtists = utils.SafeMap{Map: make(map[string]int)}
+var visitedAlbums = utils.SafeMap{Map: make(map[string]int)}
 var NumActiveProcessors = utils.SafeWaitGroup{}
 
 type Processor struct {
@@ -102,10 +103,30 @@ func (ap AlbumProcessor) Do() {
 	NumActiveProcessors.Add(1)
 	defer NumActiveProcessors.Done()
 
-	// fmt.Printf("Entering AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path)
-	// defer fmt.Printf("Exiting AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path)
 	ap.Print(fmt.Sprintf("Entering AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path))
 	defer ap.Print(fmt.Sprintf("Exiting AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path))
+
+	visitedAlbums.Lock()
+	ap.Print(fmt.Sprintf("Visiting album LOCK %v\n", ap.AlbumId))
+
+	currentPathLength := len(ap.Path)
+
+	// check if we've been here
+	shortestPath, ok := visitedAlbums.Map[ap.AlbumId]
+	if !ok {
+		ap.Print(fmt.Sprintf("Visiting album for the first time: %v\n", ap.AlbumId))
+		visitedAlbums.Map[ap.AlbumId] = currentPathLength
+	} else if currentPathLength < shortestPath {
+		ap.Print(fmt.Sprintf("Found shorter path for album: %v\n", ap.AlbumId))
+		visitedAlbums.Map[ap.AlbumId] = currentPathLength
+	} else {
+		ap.Print(fmt.Sprintf("On a longer path for album \"%v\". Exiting...\n", ap.AlbumId))
+		visitedAlbums.Unlock()
+		return
+	}
+
+	ap.Print(fmt.Sprintf("Visiting album UNLOCK %v\n", ap.AlbumId))
+	visitedAlbums.Unlock()
 
 	// lookup album by id
 	album, err := spotify.GetAlbumById(ap.AlbumId)
@@ -171,6 +192,19 @@ func ProcessResults(maxPathLength int, results <-chan []spotify.Artist, printQue
 		}
 
 	}
+
+	// print num collaborators at each distance
+	var count int
+	for i := 1; i < maxPathLength+1; i++ {
+		count = 0
+		for _, dist := range visitedArtists.Map {
+			if dist == i {
+				count++
+			}
+		}
+		fmt.Printf("Collaborators @ distance %v: %v\n", i, count)
+	}
+	fmt.Println()
 
 	if len(bestPath) < maxPathLength+1 {
 		return bestPath, nil

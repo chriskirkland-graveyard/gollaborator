@@ -18,8 +18,24 @@ type Paginator struct {
 }
 
 func Printer(queue <-chan string) {
-	for msg := range queue {
-		fmt.Print(msg)
+	// for msg := range queue {
+	// 	fmt.Print(msg)
+	// }
+
+	// do nothing. just drain print queue
+	breakOut := false
+	for {
+		select {
+		case _, ok := <-queue:
+			if !ok {
+				breakOut = true
+			}
+		}
+
+		if breakOut {
+			break
+		}
+
 	}
 	fmt.Println("PRINTER DONE")
 }
@@ -49,7 +65,7 @@ func (swg *SafeWaitGroup) Wait() {
 	swg.WaitGroup.Wait()
 }
 
-func WaitAndClose(wg sync.WaitGroup, grossChannel chan []spotify.Artist, channels ...chan string) {
+func WaitAndClose(wg *sync.WaitGroup, grossChannel chan []spotify.Artist, channels ...chan string) {
 	wg.Wait()
 	for _, c := range channels {
 		close(c)

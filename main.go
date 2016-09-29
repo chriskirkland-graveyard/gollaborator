@@ -16,7 +16,7 @@ import (
 func main() {
 	startArtistName := "Banks & Steelz"
 	targetArtistName := "Snoop Dogg"
-	maxPathLength := 4
+	maxPathLength := 2
 
 	// var startArtistName = flag.String("starting artist", "Banks & Steelz", "starting artist")
 	// var targetArtistName = flag.String("target artist", "Snoop Dogg", "target artist")
@@ -65,7 +65,7 @@ func main() {
 	<-time.After(1000 * time.Millisecond)
 
 	// close channels
-	go utils.WaitAndClose(worker.NumActiveProcessors.WaitGroup, results, printQueue)
+	go utils.WaitAndClose(&worker.NumActiveProcessors.WaitGroup, results, printQueue)
 
 	// start processing results
 	path, err := worker.ProcessResults(maxPathLength, results, printQueue)
