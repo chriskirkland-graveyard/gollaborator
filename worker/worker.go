@@ -77,7 +77,11 @@ func (ap ArtistProcessor) Do() {
 	visitedArtists.Unlock()
 
 	// get artist catalog
-	catalog := spotify.GetArtistCatalog(ap.CurrentArtistId)
+	catalog, err := spotify.GetArtistCatalog(ap.CurrentArtistId)
+	if err != nil {
+		ap.Print(fmt.Sprintf("ERROR Failed to get artist catalog: %v\n", err))
+		return
+	}
 
 	// get album ids
 	for _, album := range catalog.Albums {
@@ -104,7 +108,11 @@ func (ap AlbumProcessor) Do() {
 	defer ap.Print(fmt.Sprintf("Exiting AlbumProcessor.Do w/ %v @ %v degrees (%v)\n", ap.AlbumId, len(ap.Path), ap.Path))
 
 	// lookup album by id
-	album := spotify.GetAlbumById(ap.AlbumId)
+	album, err := spotify.GetAlbumById(ap.AlbumId)
+	if err != nil {
+		ap.Print(fmt.Sprintf("ERROR Failed to get album: %v\n", err))
+		return
+	}
 
 	for _, track := range album.Tracks.TrackItems {
 		// for artist on track

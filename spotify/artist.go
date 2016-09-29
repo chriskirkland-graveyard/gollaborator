@@ -21,7 +21,7 @@ type ArtistResponse struct {
 	Artists ArtistList `json:"artists"`
 }
 
-func GetArtistsByName(name string) []Artist {
+func GetArtistsByName(name string) ([]Artist, error) {
 	client := &http.Client{}
 
 	// url parameters
@@ -32,12 +32,13 @@ func GetArtistsByName(name string) []Artist {
 	url := fmt.Sprintf("https://api.spotify.com/v1/search?=%v", params.Encode())
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistsByName error creating request: %v", err))
+		return nil, fmt.Errorf("GetArtistsByName error creating request: %v", err)
 	}
 
+	<-GlobalRateLimiter
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistsByName request error: %v", err))
+		return nil, fmt.Errorf("GetArtistsByName request error: %v", err)
 	}
 
 	// try to UnMarshall
@@ -45,29 +46,30 @@ func GetArtistsByName(name string) []Artist {
 	defer resp.Body.Close()
 	fullBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistsByName error reading response: %v", err))
+		return nil, fmt.Errorf("GetArtistsByName error reading response: %v", err)
 	}
 
 	_ = json.Unmarshal(fullBody, &ar)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistsByName error unmarshalling artists: %v", err))
+		return nil, fmt.Errorf("GetArtistsByName error unmarshalling artists: %v", err)
 	}
 
-	return ar.Artists.ArtistItem
+	return ar.Artists.ArtistItem, nil
 }
 
-func GetArtistById(id string) Artist {
+func GetArtistById(id string) (Artist, error) {
 	client := &http.Client{}
 
 	url := fmt.Sprintf("https://api.spotify.com/v1/artists/%v", id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistById error creating request: %v", err))
+		return Artist{}, fmt.Errorf("GetArtistById error creating request: %v", err)
 	}
 
+	<-GlobalRateLimiter
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistById request error: %v", err))
+		return Artist{}, fmt.Errorf("GetArtistById request error: %v", err)
 	}
 
 	// try to UnMarshall
@@ -75,29 +77,30 @@ func GetArtistById(id string) Artist {
 	defer resp.Body.Close()
 	fullBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistById error reading response: %v", err))
+		return Artist{}, fmt.Errorf("GetArtistById error reading response: %v", err)
 	}
 
 	err = json.Unmarshal(fullBody, &artist)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistById error unmarshalling artist: %v", err))
+		return Artist{}, fmt.Errorf("GetArtistById error unmarshalling artist: %v", err)
 	}
 
-	return artist
+	return artist, nil
 }
 
-func GetArtistCatalog(id string) Catalog {
+func GetArtistCatalog(id string) (Catalog, error) {
 	client := &http.Client{}
 
 	url := fmt.Sprintf("https://api.spotify.com/v1/artists/%v/albums?market=US&limit=50", id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistCatalog error creating request: %v", err))
+		return Catalog{}, fmt.Errorf("GetArtistCatalog error creating request: %v", err)
 	}
 
+	<-GlobalRateLimiter
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistCatalog request error: %v", err))
+		return Catalog{}, fmt.Errorf("GetArtistCatalog request error: %v", err)
 	}
 
 	// try to UnMarshall
@@ -105,13 +108,14 @@ func GetArtistCatalog(id string) Catalog {
 	// defer resp.Body.Close()
 	fullBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic("catalog response body is nil!!!")
+		return Catalog{}, fmt.Errorf("catalog response body is nil!!!")
 	}
 	resp.Body.Close()
+
 	err = json.Unmarshal(fullBody, &catalog)
 	if err != nil {
-		panic(fmt.Errorf("GetArtistCatalog error unmarshalling catalog: %v", err))
+		return Catalog{}, fmt.Errorf("GetArtistCatalog error unmarshalling catalog: %v", err)
 	}
 
-	return catalog
+	return catalog, nil
 }

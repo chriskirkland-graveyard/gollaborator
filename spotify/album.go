@@ -29,18 +29,19 @@ type Catalog struct {
 	Albums []Album `json:"items"`
 }
 
-func GetAlbumById(id string) Album {
+func GetAlbumById(id string) (Album, error) {
 	client := &http.Client{}
 
 	url := fmt.Sprintf("https://api.spotify.com/v1/albums/%v", id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		panic(fmt.Errorf("GetAlbumById error creating request: %v", err))
+		return Album{}, fmt.Errorf("GetAlbumById error creating request: %v", err)
 	}
 
+	<-GlobalRateLimiter
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(fmt.Errorf("GetAlbumById request error: %v", err))
+		return Album{}, fmt.Errorf("GetAlbumById request error: %v", err)
 	}
 
 	// try to UnMarshall
@@ -48,8 +49,8 @@ func GetAlbumById(id string) Album {
 	fullBody, _ := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(fullBody, &album)
 	if err != nil {
-		panic(fmt.Errorf("GetAlbumById error unmarshalling album: %v", err))
+		return Album{}, fmt.Errorf("GetAlbumById error unmarshalling album: %v", err)
 	}
 
-	return album
+	return album, nil
 }

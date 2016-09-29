@@ -16,15 +16,25 @@ import (
 func main() {
 	startArtistName := "Banks & Steelz"
 	targetArtistName := "Snoop Dogg"
-	maxPathLength := 6
+	maxPathLength := 4
 
 	// var startArtistName = flag.String("starting artist", "Banks & Steelz", "starting artist")
 	// var targetArtistName = flag.String("target artist", "Snoop Dogg", "target artist")
 
 	// assume the first result is good... heh.
-	startArtist := spotify.GetArtistsByName(startArtistName)[0]
-	targetArtist := spotify.GetArtistsByName(targetArtistName)[0]
+	startArtistPossibilities, err := spotify.GetArtistsByName(startArtistName)
+	if err != nil {
+		panic(err)
+	}
+	startArtist := startArtistPossibilities[0]
+
+	targetArtistPossibilities, err := spotify.GetArtistsByName(targetArtistName)
+	if err != nil {
+		panic(err)
+	}
+	targetArtist := targetArtistPossibilities[0]
 	// targetArtist := spotify.Artist{Id: "6NYHiotMjdo6XqeVcCphtf", Name: "Space"}
+
 	fmt.Printf("%+v\n", startArtist)
 	fmt.Printf("%+v\n", targetArtist)
 	fmt.Println()
